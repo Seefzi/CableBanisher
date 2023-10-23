@@ -72,6 +72,7 @@ class Program
         string query = $"SELECT * FROM Win32_NetworkAdapter WHERE Name = '{networkDevices[i].Name}'";
         ManagementObjectSearcher search = new ManagementObjectSearcher(query);
         ManagementObjectCollection collection = search.Get();
+        Console.WriteLine(collection);
 
         foreach (ManagementObject item in collection)
         {
