@@ -3,6 +3,7 @@ using System;
 using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
 using System.Management;
+using System.Management.Automation;
 
 class Program
 {
@@ -48,6 +49,7 @@ class Program
         
     }
 
+    
 
     // Finds any network adapters with the type Wireless80211 and returns it as an array
     static NetworkInterface[] ScanDevices()
@@ -69,32 +71,12 @@ class Program
     static void SetupAdapter(NetworkInterface[] networkDevices, string input)
     {
         int i = NumberExtractor(networkDevices.Length, input);
-        string query = $"SELECT * FROM Win32_NetworkAdapter WHERE Name = '{networkDevices[i].Name}'";
-        ManagementObjectSearcher search = new ManagementObjectSearcher(query);
-        ManagementObjectCollection collection = search.Get();
-        Console.WriteLine(collection);
 
-        foreach (ManagementObject item in collection)
-        {
-            try
-            { 
-                object result = item.InvokeMethod("Disable", null);
-                if ((uint)result == 0)
-                {
-                    Console.WriteLine("Success!");
-                }
-                else
-                {
-                    Console.WriteLine($"Failed to disable network adapter. Error code: {(uint)result}");
-                }
-                Console.ReadKey();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"{e.Message}");
-                Console.ReadKey();
-            }
-        }
+        PowerShell ps = PowerShell.Create();
+        ps.AddCommand($"./Configurator.ps1 -wn {networkDevices[i].Name} -a 1");
+
+        Console.WriteLine(ps.ToString());
+
         Console.ReadKey();
 
     }
@@ -105,10 +87,12 @@ class Program
     {
         int i = NumberExtractor(networkDevices.Length, input);
 
-        if (i >= 0)
-        {
+        PowerShell ps = PowerShell.Create();
+        ps.AddCommand($"./Configurator.ps1 -wn {networkDevices[i].Name} -a 0");
 
-        }
+        Console.WriteLine(ps.ToString());
+
+        Console.ReadKey();
     }
 
 
