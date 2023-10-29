@@ -7,6 +7,16 @@ using System.Management.Automation;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 
+/* IMPORTANT
+ * 
+ * 
+ * The .cs program element does not currently work!
+ * 
+ * See the readme about how to use CableBanisher!
+ * 
+ * 
+ */
+
 class Program
 {
     static void Main()
