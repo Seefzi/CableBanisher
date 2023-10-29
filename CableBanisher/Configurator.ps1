@@ -1,28 +1,29 @@
 # Takes adapter name (wn) and action (a) as arguments
 
 param (
-	[string]$wn 
-	[int]$a 
+	[string]$wn = "Wi-Fi",
+	[int]$a = 1
 )
 
-$WirelessAdapterName = $wn
 $connectionProfile = [Windows.Networking.Connectivity.NetworkInformation,Windows.Networking.Connectivity,ContentType=WindowsRuntime]::GetInternetConnectionProfile()
 $tetheringManager = [Windows.Networking.NetworkOperators.NetworkOperatorTetheringManager,Windows.Networking.NetworkOperators,ContentType=WindowsRuntime]::CreateFromConnectionProfile($connectionProfile)
 
-if (a -eq 1)
+Write-Output "Script started."
+Write-Output "Wireless Adapter Name: $wn"
+Write-Output "Action: $a"
+
+if ($a -eq 1)
 {
 	Start-Sleep -Seconds 2
-	netsh wlan set autoconfig enabled=yes interface=$WirelessAdapterName
-
+	netsh wlan set autoconfig enabled=yes interface=$wn
 	$tetheringManager.StartTetheringAsync()
 	Start-Sleep -Seconds 2
-
-	netsh wlan set autoconfig enabled=no interface=$WirelessAdapterName
+	netsh wlan set autoconfig enabled=no interface=$wn
 } 
-else if (a -eq 0)
+elseif ($a -eq 0)
 {
 	Start-Sleep -Seconds 2
-	netsh wlan set autoconfig enabled=yes interface=$WirelessAdapterName
+	netsh wlan set autoconfig enabled=yes interface=$wn
 	$tetheringManager.StopTetheringAsync()
 }
 

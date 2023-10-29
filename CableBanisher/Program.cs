@@ -4,6 +4,8 @@ using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
 using System.Management;
 using System.Management.Automation;
+using System.Collections.ObjectModel;
+using System.Collections.Generic;
 
 class Program
 {
@@ -38,6 +40,7 @@ class Program
                     break;
                 case 'q':
                 default:
+                    PrintTable(networkDevices);
                     break;
             }
             
@@ -71,14 +74,35 @@ class Program
     static void SetupAdapter(NetworkInterface[] networkDevices, string input)
     {
         int i = NumberExtractor(networkDevices.Length, input);
+        if (i >= 0)
+        {
+            
+            Console.WriteLine($"Executing: ./Configurator.ps1 -wn {networkDevices[i].Name} -a 1");
 
-        PowerShell ps = PowerShell.Create();
-        ps.AddCommand($"./Configurator.ps1 -wn {networkDevices[i].Name} -a 1");
+            PowerShell ps = PowerShell.Create();
 
-        Console.WriteLine(ps.ToString());
+            ps.AddCommand("cd").AddParameter(AppDomain.CurrentDomain.BaseDirectory);
+            ps.AddCommand("./Configurator.ps1")
+                .AddParameter("-a", 1)
+                .AddParameter("-wn", "Wifi");
 
-        Console.ReadKey();
-
+            try
+            {
+                Task.Run(() => ps.Invoke());
+                Console.WriteLine("Success.");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"{e.Message}");
+            }
+            
+            Console.ReadKey();
+        }
+        else
+        {
+            Console.WriteLine("Syntax: no line number selected.\nAny key to continue...");
+            Console.ReadKey();
+        }
     }
 
 
@@ -90,7 +114,7 @@ class Program
         PowerShell ps = PowerShell.Create();
         ps.AddCommand($"./Configurator.ps1 -wn {networkDevices[i].Name} -a 0");
 
-        Console.WriteLine(ps.ToString());
+        Console.WriteLine($"Executing: ./Configurator.ps1 -wn {networkDevices[i].Name} -a 0");
 
         Console.ReadKey();
     }
