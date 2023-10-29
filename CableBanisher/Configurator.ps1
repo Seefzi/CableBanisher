@@ -1,8 +1,8 @@
 # Takes adapter name (wn) and action (a) as arguments
 
 param (
-	[string]$wn = "Wi-Fi",
-	[int]$a = 1
+	[int]$a = 1,
+	[string]$wn = "Wi-Fi"
 )
 
 $connectionProfile = [Windows.Networking.Connectivity.NetworkInformation,Windows.Networking.Connectivity,ContentType=WindowsRuntime]::GetInternetConnectionProfile()
