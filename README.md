@@ -9,8 +9,8 @@ If you have yet to do so, open a Powershell window as Administrator.
 
 Run the following commands (one at a time):
 
-  Set-ExecutionPolicy Unrestricted
-  Set-ExecutionPolicy Unrestricted -Scope CurrentUser
+    Set-ExecutionPolicy Unrestricted
+    Set-ExecutionPolicy Unrestricted -Scope CurrentUser
 
 This allows the script to run (Windows disallows this by default).
 
