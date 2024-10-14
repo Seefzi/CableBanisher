@@ -2,10 +2,8 @@
 using System;
 using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
-using System.Management;
 using System.Management.Automation;
-using System.Collections.ObjectModel;
-using System.Collections.Generic;
+using Windows.Networking.Connectivity;
 
 /* IMPORTANT
  * 
