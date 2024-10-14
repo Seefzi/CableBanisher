@@ -12,6 +12,7 @@ Wait a bit. It'll tell you when it's done.
 NOTE: If you are experiencing slower than expected speeds, it may be necessary to connect another Wi-Fi 6 capable device to the hotspot first. I'm not entirely sure why this is, but it's a relatively simple if annoying fix.
 
 RESET NETWORK ADAPTER:
+
 Run CableBanisher.exe.
 Find the network adapter from before.
 Type 'd', the number next to your adapter, then hit enter.
