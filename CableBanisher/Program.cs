@@ -1,23 +1,13 @@
-﻿using System.IO;
-using System;
-using System.Net.NetworkInformation;
+﻿using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
-using System.Management.Automation;
 using Windows.Networking.Connectivity;
+using Windows.Networking.NetworkOperators;
+using System.Diagnostics;
 
-/* IMPORTANT
- * 
- * 
- * The .cs program element does not currently work!
- * 
- * See the readme about how to use CableBanisher!
- * 
- * 
- */
 
 class Program
 {
-    static void Main()
+    static async Task Main()
     {
         string input = "i";
         NetworkInterface[] networkDevices = ScanDevices();
@@ -39,11 +29,11 @@ class Program
                     PrintTable(networkDevices);
                     break;
                 case 's':
-                    SetupAdapter(networkDevices, input);
+                    await SetupAdapter(networkDevices, input);
                     PrintTable(networkDevices);
                     break;
                 case 'd':
-                    RestoreAdapter(networkDevices, input);
+                    await RestoreAdapter(networkDevices, input);
                     PrintTable(networkDevices);
                     break;
                 case 'q':
@@ -79,32 +69,38 @@ class Program
 
 
     // Sets an adapter up for VR hotspot use
-    static void SetupAdapter(NetworkInterface[] networkDevices, string input)
+    static async Task SetupAdapter(NetworkInterface[] networkDevices, string input)
     {
         int i = NumberExtractor(networkDevices.Length, input);
         if (i >= 0)
         {
-            
-            Console.WriteLine($"Executing: ./Configurator.ps1 -wn {networkDevices[i].Name} -a 1");
+            Console.WriteLine($"Disabling Wi-Fi scanning on designated network interface...");
 
-            PowerShell ps = PowerShell.Create();
+            RunNetshCommand($"wlan set autoconfig enabled=yes interface=\"{networkDevices[i].Name}\"");
 
-            ps.AddCommand("cd").AddParameter(AppDomain.CurrentDomain.BaseDirectory);
-            ps.AddCommand("./Configurator.ps1")
-                .AddParameter("-a", 1)
-                .AddParameter("-wn", "Wifi");
+            ConnectionProfile connectionProfile = NetworkInformation.GetInternetConnectionProfile();
 
-            try
+            if (connectionProfile != null)
             {
-                Task.Run(() => ps.Invoke());
-                Console.WriteLine("Success.");
+                NetworkOperatorTetheringManager tetheringManager = NetworkOperatorTetheringManager.CreateFromConnectionProfile(connectionProfile);
+
+                if (tetheringManager != null)
+                {
+                    var result = await tetheringManager.StartTetheringAsync();
+
+                    if (result.Status == TetheringOperationStatus.Success)
+                    {
+                        RunNetshCommand($"wlan set autoconfig enabled=no interface=\"{networkDevices[i].Name}\"");
+
+                        Console.WriteLine("Setup complete. Keep in mind, you may need to connect your smartphone to the hotspot network for full Wifi 6 speeds to be available. Press any key to continue.");
+                        Console.ReadKey();
+                    }
+                }
             }
-            catch (Exception e)
+            else
             {
-                Console.WriteLine($"{e.Message}");
+                Console.WriteLine("Unable to get your connection profile. Autoconfig left enabled.");
             }
-            
-            Console.ReadKey();
         }
         else
         {
@@ -113,18 +109,49 @@ class Program
         }
     }
 
+    // Restores autoconfig and *attempts to* disable tethering.
 
-    // Sets an adapter up for regular use
-    static void RestoreAdapter(NetworkInterface[] networkDevices, string input)
+    static async Task RestoreAdapter(NetworkInterface[] networkDevices, string input)
     {
         int i = NumberExtractor(networkDevices.Length, input);
+        if (i >= 0)
+        {
+            Console.WriteLine($"Re-enabling Wi-Fi scanning on designated network interface...");
 
-        PowerShell ps = PowerShell.Create();
-        ps.AddCommand($"./Configurator.ps1 -wn {networkDevices[i].Name} -a 0");
+            RunNetshCommand($"wlan set autoconfig enabled=yes interface=\"{networkDevices[i].Name}\"");
 
-        Console.WriteLine($"Executing: ./Configurator.ps1 -wn {networkDevices[i].Name} -a 0");
+            ConnectionProfile connectionProfile = NetworkInformation.GetInternetConnectionProfile();
 
-        Console.ReadKey();
+            if (connectionProfile != null)
+            {
+                NetworkOperatorTetheringManager tetheringManager = NetworkOperatorTetheringManager.CreateFromConnectionProfile(connectionProfile);
+
+                if (tetheringManager != null)
+                {
+                    try
+                    {
+                        await tetheringManager.StopTetheringAsync();
+                        Console.WriteLine("Tethering timed out on shutdown, though it may still have been disabled. Your network card will still work regardless. Press any key to continue.");
+                    } 
+                    catch
+                    {
+                        Console.WriteLine("Tethering stopped and network settings restored. Press any key to continue.");
+                    }
+                    
+                    Console.ReadKey();
+                    
+                }
+            }
+            else
+            {
+                Console.WriteLine("Unable to get your connection profile. Autoconfig left enabled.");
+            }
+        }
+        else
+        {
+            Console.WriteLine("Syntax: no line number selected.\nAny key to continue...");
+            Console.ReadKey();
+        }
     }
 
 
@@ -162,7 +189,70 @@ class Program
             Console.WriteLine("Warning: No compatible network adapter detected.");
         }
 
-        Console.WriteLine("\n\nr: refresh list of network adapters\ns (plus line number): setup network adapter as VR hotspot\nd: restore network adapter to default settings\nq: quit\n\n");
+        Console.WriteLine("\n\nr: refresh list of network adapters\ns (plus line number): setup network adapter as VR hotspot\nd (plus line number): restore network adapter to default settings\nq: quit\n\n");
         Console.Write("$: ");
+    }
+
+    // Simple class for running the necessary networking commands
+    static void RunNetshCommand(string arguments)
+    {
+        try
+        {
+            Process netshProcess = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "netsh",
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+
+            netshProcess.Start();
+            string output = netshProcess.StandardOutput.ReadToEnd();
+            netshProcess.WaitForExit();
+
+            Console.WriteLine($"Netsh Output: {output}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error running netsh command: {ex.Message}");
+        }
+    }
+
+    static bool GetHotspotEnabled()
+    {
+        // Create a process to run the command
+        ProcessStartInfo startInfo = new ProcessStartInfo
+        {
+            FileName = "netsh",
+            Arguments = "wlan show hostednetwork",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        // Start the process and read the output
+        using (Process process = Process.Start(startInfo))
+        {
+            using (var reader = process.StandardOutput)
+            {
+                string result = reader.ReadToEnd();
+                process.WaitForExit();
+
+                // Check for "Status" in the output
+                if (result.Contains("Status") && result.Contains("Started"))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
     }
 }
