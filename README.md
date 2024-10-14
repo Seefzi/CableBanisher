@@ -1,5 +1,6 @@
 # CableBanisher
 Sets up a network adapter for use with Meta Airlink or Virtual Desktop.
+Only works for Windows PCs.
 
 HOW TO USE:
 
