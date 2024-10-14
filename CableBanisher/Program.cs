@@ -16,32 +16,24 @@ class Program
         // Gets user input and follows the switch statement to determine next action
         while (input != null && (input.Length == 0 || char.ToLower(input[0]) != 'q'))
         {
-            /* 
-             * r = refresh
-             * s = setup for VR hotspot
-             * d = restore network adapter to default settings
-             * q = quit
-             */
             switch (char.ToLower(input[0]))
             {
-                case 'r':
+                case 'r': // Refresh
                     networkDevices = ScanDevices();
-                    PrintTable(networkDevices);
                     break;
-                case 's':
+                case 's': // Setup Network Device
                     await SetupAdapter(networkDevices, input);
-                    PrintTable(networkDevices);
                     break;
-                case 'd':
+                case 'd': // Reset Network Device
                     await RestoreAdapter(networkDevices, input);
-                    PrintTable(networkDevices);
                     break;
-                case 'q':
+                case 'q': // Quit
                 default:
-                    PrintTable(networkDevices);
                     break;
             }
             
+            PrintTable(networkDevices);
+
             // Get input, tries to avoid null
             input = Console.ReadLine()?.Trim() ?? "i";
             if (string.IsNullOrEmpty(input))
@@ -52,17 +44,13 @@ class Program
 
     
 
-    // Finds any network adapters with the type Wireless80211 and returns it as an array
+    // Finds any network adapters with the type Wireless80211 and returns it as an array. I don't know what the Local Area Connection things are but they're not the right ones so they're also excluded.
     static NetworkInterface[] ScanDevices()
     {
         List<NetworkInterface> networkDevices = new List<NetworkInterface>();
         foreach (NetworkInterface iface in NetworkInterface.GetAllNetworkInterfaces())
-        {
-            if (iface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
-            {
+            if (iface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 && !iface.Name.Contains("Local Area Connection"))
                 networkDevices.Add(iface);
-            }
-        }
         
         return networkDevices.ToArray();
     }
@@ -74,7 +62,7 @@ class Program
         int i = NumberExtractor(networkDevices.Length, input);
         if (i >= 0)
         {
-            Console.WriteLine($"Disabling Wi-Fi scanning on designated network interface...");
+            Console.WriteLine($"Starting network card setup and hotspot...\n");
 
             RunNetshCommand($"wlan set autoconfig enabled=yes interface=\"{networkDevices[i].Name}\"");
 
@@ -92,7 +80,7 @@ class Program
                     {
                         RunNetshCommand($"wlan set autoconfig enabled=no interface=\"{networkDevices[i].Name}\"");
 
-                        Console.WriteLine("Setup complete. Keep in mind, you may need to connect your smartphone to the hotspot network for full Wifi 6 speeds to be available. Press any key to continue.");
+                        Console.WriteLine("Setup complete.\nAny key to continue...");
                         Console.ReadKey();
                     }
                 }
@@ -104,7 +92,7 @@ class Program
         }
         else
         {
-            Console.WriteLine("Syntax: no line number selected.\nAny key to continue...");
+            Console.WriteLine("Check syntax and try again.\nAny key to continue...");
             Console.ReadKey();
         }
     }
@@ -116,7 +104,7 @@ class Program
         int i = NumberExtractor(networkDevices.Length, input);
         if (i >= 0)
         {
-            Console.WriteLine($"Re-enabling Wi-Fi scanning on designated network interface...");
+            Console.WriteLine($"Resetting network card settings and disabling hotspot...");
 
             RunNetshCommand($"wlan set autoconfig enabled=yes interface=\"{networkDevices[i].Name}\"");
 
@@ -131,11 +119,11 @@ class Program
                     try
                     {
                         await tetheringManager.StopTetheringAsync();
-                        Console.WriteLine("Tethering timed out on shutdown, though it may still have been disabled. Your network card will still work regardless. Press any key to continue.");
+                        Console.WriteLine("Hotspot stopped and network settings restored.\nAny key to continue...");
                     } 
                     catch
                     {
-                        Console.WriteLine("Tethering stopped and network settings restored. Press any key to continue.");
+                        Console.WriteLine("Network settings restored. Hotspot timed out on shutdown, though it may still have been disabled. Your network card will still work regardless.\nAny key to continue...");
                     }
                     
                     Console.ReadKey();
@@ -149,7 +137,7 @@ class Program
         }
         else
         {
-            Console.WriteLine("Syntax: no line number selected.\nAny key to continue...");
+            Console.WriteLine("Check syntax and try again.\nAny key to continue...");
             Console.ReadKey();
         }
     }
@@ -175,6 +163,17 @@ class Program
     static void PrintTable(NetworkInterface[] interfaces)
     {
         Console.Clear();
+        Console.WriteLine("Cable Banisher version 1.1");
+        Console.Write("\n\n");
+        Console.WriteLine("* This program fixes major stuttering issues when using your PC's wireless card as a hotspot to enable wireless VR.");
+        Console.WriteLine("* For the best experience, use ethernet to connect your PC to the internet.");
+        Console.WriteLine("* While set up for VR, the wireless card won't be available for internet connections.");
+        Console.WriteLine("* Find your desired network card below. It is usually called something like \"Wi-Fi\".");
+        Console.WriteLine("* Use the 's' command to setup the network card for VR.");
+        Console.WriteLine("* Once setup is complete, connect your VR headset to your PC's wireless hotspot (it should enable itself automatically).");
+        Console.WriteLine("* For the Quest 2 and other Meta headsets, you may need to connect then disconnect another Wi-Fi 6 enabled device, such as a modern smartphone, in order to achieve best performance. For some reason, it doesn't start with Wi-Fi 6 when only those headsets are connected.");
+        Console.WriteLine("* If you don't know your PC hotspot's SSID and password, you can find it in your PC settings (just search 'hotspot').");
+        Console.WriteLine("* If you need to use the network card for internet access, you can change it back with the 'd' command.");
         Console.Write("\n\n");
         int i = 1;
         foreach (NetworkInterface iface in interfaces)
@@ -193,7 +192,7 @@ class Program
         Console.Write("$: ");
     }
 
-    // Simple class for running the necessary networking commands
+    // Simple classes for running the necessary networking commands
     static void RunNetshCommand(string arguments)
     {
         try
@@ -213,8 +212,6 @@ class Program
             netshProcess.Start();
             string output = netshProcess.StandardOutput.ReadToEnd();
             netshProcess.WaitForExit();
-
-            Console.WriteLine($"Netsh Output: {output}");
         }
         catch (Exception ex)
         {
@@ -224,7 +221,6 @@ class Program
 
     static bool GetHotspotEnabled()
     {
-        // Create a process to run the command
         ProcessStartInfo startInfo = new ProcessStartInfo
         {
             FileName = "netsh",
@@ -235,7 +231,6 @@ class Program
             CreateNoWindow = true
         };
 
-        // Start the process and read the output
         using (Process process = Process.Start(startInfo))
         {
             using (var reader = process.StandardOutput)
@@ -243,7 +238,6 @@ class Program
                 string result = reader.ReadToEnd();
                 process.WaitForExit();
 
-                // Check for "Status" in the output
                 if (result.Contains("Status") && result.Contains("Started"))
                 {
                     return true;
