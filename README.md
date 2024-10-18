@@ -27,13 +27,13 @@ I highly recommend the C# app version over the script version. It doesn't requir
 
 If you still decide to use the script version:
 
-1) Unrestrict your ExecutionPolicy
+1) Open an ADMIN PowerShell and unrestrict your ExecutionPolicy
 
 ```Set-ExecutionPolicy Unrestricted```
 
 ```Set-ExecutionPolicy Unrestricted -Scope CurrentUser```
 
-2) Open an ADMIN PowerShell and CD to the path of the script
+2) CD to the path of the script
 
 ```CD /<wherever you put it>```
 
