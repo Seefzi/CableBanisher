@@ -33,15 +33,15 @@ If you still decide to use the script version:
 
 ```Set-ExecutionPolicy Unrestricted -Scope CurrentUser```
 
-3) Open an ADMIN PowerShell and CD to the path of the script
+2) Open an ADMIN PowerShell and CD to the path of the script
 
 ```CD /<wherever you put it>```
 
-5) Run the script with a 1 to setup the network card or 0 to restore the network card
+3) Run the script with a 1 to setup the network card or 0 to restore the network card
 
 ```./Configurator.ps1 <0 or 1> "<name of your network adapter ONLY IF it is not called 'Wi-Fi', this parameter must be in quotes.>"```
 
-7) Restore your ExecutionPolicy
+4) Restore your ExecutionPolicy
 
 ```Set-ExecutionPolicy Default```
 
