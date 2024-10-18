@@ -23,7 +23,7 @@ It may or may not successfully disable your hotspot. The Windows API for it time
 
 # Old Script Version:
 
-I highly recommend the C# app version over the script version. It doesn't require the extra work the PowerShell script does, and it's more secure than leaving your ExecutionPolicy open. If you used the PowerShell script to set up a network adapter, you can still use the script to reset it.
+I highly recommend the C# app version over the script version. It doesn't require the extra work the PowerShell script does, and it's more secure than leaving your ExecutionPolicy open. If you used the PowerShell script to set up a network adapter, you can still use the C# app to reset it, no problemo.
 
 If you still decide to use the script version:
 
