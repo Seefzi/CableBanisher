@@ -28,15 +28,21 @@ I highly recommend the C# app version over the script version. It doesn't requir
 If you still decide to use the script version:
 
 1) Unrestrict your ExecutionPolicy
+
 ```Set-ExecutionPolicy Unrestricted```
+
 ```Set-ExecutionPolicy Unrestricted -Scope CurrentUser```
 
-2) Open an ADMIN PowerShell and CD to the path of the script
+3) Open an ADMIN PowerShell and CD to the path of the script
+
 ```CD /<wherever you put it>```
 
-3) Run the script with a 1 to setup the network card or 0 to restore the network card
+5) Run the script with a 1 to setup the network card or 0 to restore the network card
+
 ```./Configurator.ps1 <0 or 1> "<name of your network adapter ONLY IF it is not called 'Wi-Fi', this parameter must be in quotes.>"```
 
-4) Restore your ExecutionPolicy
+7) Restore your ExecutionPolicy
+
 ```Set-ExecutionPolicy Default```
+
 ```Set-ExecutionPolicy Default -Scope CurrentUser```
