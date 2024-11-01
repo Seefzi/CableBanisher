@@ -60,39 +60,59 @@ class Program
     static async Task SetupAdapter(NetworkInterface[] networkDevices, string input)
     {
         int i = NumberExtractor(networkDevices.Length, input);
-        if (i >= 0)
-        {
-            Console.WriteLine($"Starting network card setup and hotspot...\n");
 
-            RunNetshCommand($"wlan set autoconfig enabled=yes interface=\"{networkDevices[i].Name}\"");
-
-            ConnectionProfile connectionProfile = NetworkInformation.GetInternetConnectionProfile();
-
-            if (connectionProfile != null)
-            {
-                NetworkOperatorTetheringManager tetheringManager = NetworkOperatorTetheringManager.CreateFromConnectionProfile(connectionProfile);
-
-                if (tetheringManager != null)
-                {
-                    var result = await tetheringManager.StartTetheringAsync();
-
-                    if (result.Status == TetheringOperationStatus.Success)
-                    {
-                        RunNetshCommand($"wlan set autoconfig enabled=no interface=\"{networkDevices[i].Name}\"");
-
-                        Console.WriteLine("Setup complete.\nAny key to continue...");
-                        Console.ReadKey();
-                    }
-                }
-            }
-            else
-            {
-                Console.WriteLine("Unable to get your connection profile. Autoconfig left enabled.");
-            }
-        }
-        else
+        if (i < 0)
         {
             Console.WriteLine("Check syntax and try again.\nAny key to continue...");
+            Console.ReadKey();
+            return;
+        }
+
+        Console.WriteLine($"Starting network card setup and hotspot...\n");
+
+        RunNetshCommand($"wlan set autoconfig enabled=yes interface=\"{networkDevices[i].Name}\"");
+
+        ConnectionProfile connectionProfile = NetworkInformation.GetInternetConnectionProfile();
+
+        if (connectionProfile == null)
+        {
+            Console.WriteLine("Error: Unable to get your connection profile. Setup cannot be completed. Default settings remain applied.");
+            Console.WriteLine("Any key to continue...");
+            Console.ReadKey();
+            return;
+        }
+
+        NetworkOperatorTetheringManager tetheringManager = NetworkOperatorTetheringManager.CreateFromConnectionProfile(connectionProfile);
+
+        if (tetheringManager == null)
+        {
+            Console.WriteLine("Something went wrong. Does your network adapter and OS version support tethering?");
+            Console.WriteLine("Any key to continue...");
+            Console.ReadKey();
+            return;
+        }
+
+        try
+        {
+            var result = await tetheringManager.StartTetheringAsync();
+            if (result.Status == TetheringOperationStatus.Success)
+            {
+                RunNetshCommand($"wlan set autoconfig enabled=no interface=\"{networkDevices[i].Name}\"");
+
+                Console.WriteLine("Setup complete.\nAny key to continue...");
+                Console.ReadKey();
+            }
+            else
+                throw new Exception("StartTetheringAsync operation failed.");
+        }
+        catch (Exception ex) 
+        { 
+            Console.WriteLine("Something went wrong enabling your hotspot. Specific error: " + ex);
+            Console.WriteLine("Configuration can continue. Your computer's hotspot may have already enabled itself. If not, please enable it and press any key...");
+            Console.ReadKey();
+
+            RunNetshCommand($"wlan set autoconfig enabled=no interface=\"{networkDevices[i].Name}\"");
+            Console.WriteLine("Setup complete.\nAny key to continue...");
             Console.ReadKey();
         }
     }
@@ -163,7 +183,7 @@ class Program
     static void PrintTable(NetworkInterface[] interfaces)
     {
         Console.Clear();
-        Console.WriteLine("Cable Banisher version 1.1");
+        Console.WriteLine("Cable Banisher version 1.2");
         Console.Write("\n\n");
         Console.WriteLine("* This program fixes major stuttering issues when using your PC's wireless card as a hotspot to enable wireless VR.");
         Console.WriteLine("* For the best experience, use ethernet to connect your PC to the internet.");
