@@ -92,29 +92,7 @@ class Program
             return;
         }
 
-        try
-        {
-            var result = await tetheringManager.StartTetheringAsync();
-            if (result.Status == TetheringOperationStatus.Success)
-            {
-                RunNetshCommand($"wlan set autoconfig enabled=no interface=\"{networkDevices[i].Name}\"");
-
-                Console.WriteLine("Setup complete.\nAny key to continue...");
-                Console.ReadKey();
-            }
-            else
-                throw new Exception("StartTetheringAsync operation failed.");
-        }
-        catch (Exception ex) 
-        { 
-            Console.WriteLine("Something went wrong enabling your hotspot. Specific error: " + ex);
-            Console.WriteLine("Configuration can continue. Your computer's hotspot may have already enabled itself. If not, please enable it and press any key...");
-            Console.ReadKey();
-
-            RunNetshCommand($"wlan set autoconfig enabled=no interface=\"{networkDevices[i].Name}\"");
-            Console.WriteLine("Setup complete.\nAny key to continue...");
-            Console.ReadKey();
-        }
+        await StartHotspot(tetheringManager, networkDevices[i].Name);
     }
 
     // Restores autoconfig and *attempts to* disable tethering.
@@ -212,7 +190,7 @@ class Program
         Console.Write("$: ");
     }
 
-    // Simple classes for running the necessary networking commands
+    // Simple method for running the necessary networking commands
     static void RunNetshCommand(string arguments)
     {
         try
@@ -237,6 +215,43 @@ class Program
         {
             Console.WriteLine($"Error running netsh command: {ex.Message}");
         }
+    }
+
+    // On some machines, starting the hotspot programmatically isn't consistent. Here's some error handling for that case
+    static async Task StartHotspot(NetworkOperatorTetheringManager tetheringManager, string netName)
+    {
+        while (!GetHotspotEnabled())
+        {
+            try
+            {
+                var result = await tetheringManager.StartTetheringAsync();
+                if (result.Status == TetheringOperationStatus.Success)
+                {
+                    break;
+                }
+                else
+                    throw new Exception("StartTetheringAsync operation failed.");
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("It seems the Windows API may have timed out. Checking if the hotspot is ready...");
+                if (GetHotspotEnabled())
+                {
+                    Console.WriteLine("The hotspot is ready. Proceeding...");
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("The hotspot didn't successfully enable. If this continues to fail, please enable your hotspot in Settings. Any key to try again...");
+                    Console.ReadKey();
+                }
+            }
+        }
+        RunNetshCommand($"wlan set autoconfig enabled=no interface=\"{netName}\"");
+
+        Console.WriteLine("Setup complete.\nAny key to continue...");
+        Console.ReadKey();
     }
 
     static bool GetHotspotEnabled()
