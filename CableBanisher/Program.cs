@@ -161,7 +161,7 @@ class Program
     static void PrintTable(NetworkInterface[] interfaces)
     {
         Console.Clear();
-        Console.WriteLine("Cable Banisher version 1.2");
+        Console.WriteLine("Cable Banisher version 1.3");
         Console.Write("\n\n");
         Console.WriteLine("* This program fixes major stuttering issues when using your PC's wireless card as a hotspot to enable wireless VR.");
         Console.WriteLine("* For the best experience, use ethernet to connect your PC to the internet.");
