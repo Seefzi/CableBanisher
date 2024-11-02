@@ -19,7 +19,7 @@ Extract it to its own directory, preferably.
 Run CableBanisher.exe.
 Find the network adapter you want to use for Airlink/Virtual Desktop.
 Type 's', the number next to the adapter of choice, then hit enter.
-Wait a bit. It'll tell you when it's done.
+Wait a bit. It'll tell you when it's done or if it needs help.
 
 NOTE: If you are experiencing slower than expected speeds, it may be necessary to connect another Wi-Fi 6 capable device to the hotspot first. I'm not entirely sure why this is, but it's a relatively simple if annoying fix.
 
@@ -33,26 +33,4 @@ It may or may not successfully disable your hotspot. The Windows API for it time
 
 # Old Script Version:
 
-I highly recommend the C# app version over the script version. It doesn't require the extra work the PowerShell script does, and it's more secure than leaving your ExecutionPolicy open. If you used the PowerShell script to set up a network adapter, you can still use the C# app to reset it, no problemo.
-
-If you still decide to use the script version:
-
-1) Open an ADMIN PowerShell and unrestrict your ExecutionPolicy
-
-```Set-ExecutionPolicy Unrestricted```
-
-```Set-ExecutionPolicy Unrestricted -Scope CurrentUser```
-
-2) CD to the path of the script
-
-```CD /<wherever you put it>```
-
-3) Run the script with a 1 to setup the network card or 0 to restore the network card
-
-```./Configurator.ps1 <0 or 1> "<name of your network adapter ONLY IF it is not called 'Wi-Fi', this parameter must be in quotes.>"```
-
-4) Restore your ExecutionPolicy
-
-```Set-ExecutionPolicy Default```
-
-```Set-ExecutionPolicy Default -Scope CurrentUser```
+Don't use the old script version. You're wasting your time with it.
