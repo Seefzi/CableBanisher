@@ -2,6 +2,16 @@
 Sets up a network adapter for use with Meta Airlink or Virtual Desktop.
 Only works for Windows PCs.
 
+FUN FACT:
+
+You can do everything this program does manually (as long as the network adapter in your system is called "Wi-Fi") by:
+- opening a cmd window
+- running ```netsh wlan set autoconfig enabled=yes interface=Wi-Fi``` 
+- turning on hotspot in settings
+- running ```netsh wlan set autoconfig enabled=no interface=Wi-Fi```
+
+This is maybe a bit overengineered as a method, but to hell with it. I already wrote the program
+
 HOW TO USE:
 
 Download and extract the .zip file from the latest release. 
